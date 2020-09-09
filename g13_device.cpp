@@ -283,8 +283,8 @@ G13_ActionPtr G13_Device::MakeAction(const std::string &action) {
   if (action.empty()) {
     throw G13_CommandException("empty action string");
   }
-  if (action[0] == '>') {
-    return G13_ActionPtr(new G13_Action_PipeOut(*this, &action[1]));
+  if (action[0] == '>' || action[0] == '|') {
+    return G13_ActionPtr(new G13_Action_PipeOut(*this, &action[1], action[0] == '|'));
   } else if (action[0] == '!') {
     return G13_ActionPtr(new G13_Action_Command(*this, &action[1]));
   } else {

@@ -69,13 +69,14 @@ public:
  */
 class G13_Action_PipeOut : public G13_Action {
 public:
-  G13_Action_PipeOut(G13_Device &keypad, const std::string &out);
+  G13_Action_PipeOut(G13_Device &keypad, const std::string &out, const bool split);
   ~G13_Action_PipeOut() override;
 
   void act(G13_Device &, bool is_down) override;
   void dump(std::ostream &) const override;
 
   std::string _out;
+  std::string _outup;
 };
 
 /*!
