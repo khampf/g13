@@ -94,16 +94,9 @@ void G13_StickZone::dump(std::ostream &out) const {
 void G13_StickZone::test(const G13_ZoneCoord &loc) {
   if (!_action)
     return;
-  bool prior_active = _active;
-  _active = _bounds.contains(loc);
-  if (!_active) {
-    if (prior_active) {
-      // cout << "exit stick zone " << m_name << std::endl;
-      _action->act(false);
-    }
-  } else {
-    // cout << "in stick zone " << m_name << std::endl;
-    _action->act(true);
+  if (_active != _bounds.contains(loc)) {
+    _active = !_active;
+    _action->act(_active);
   }
 }
 
