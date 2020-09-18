@@ -57,7 +57,7 @@ void G13_Manager::InitKeynames() {
   for (auto &name : G13::G13_KEY_STRINGS) {
     g13_key_to_name[key_index] = name;
     g13_name_to_key[name] = key_index;
-    G13_DBG("mapping G13 " << name << " = " << key_index);
+    G13_OUT("mapping G13 " << name << " = " << key_index);
     key_index++;
   }
 
@@ -75,7 +75,7 @@ void G13_Manager::InitKeynames() {
 
       input_key_to_name[code] = symbol;
       input_name_to_key[symbol] = code;
-      G13_DBG("mapping " << symbol << " " << keyname << "=" << code);
+      G13_OUT("mapping " << symbol << " " << keyname << "=" << code);
     }
   }
 
@@ -89,7 +89,7 @@ void G13_Manager::InitKeynames() {
     } else {
       input_key_to_name[code] = name;
       input_name_to_key[name] = code;
-      G13_DBG("mapping " << name << " " << keyname << "=" << code);
+      G13_OUT("mapping " << name << " " << keyname << "=" << code);
     }
   }
 }

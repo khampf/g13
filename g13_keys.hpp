@@ -40,10 +40,11 @@ static const char *G13_NONPARSED_KEYS[] = {
     "UNDEF1", "LIGHT_STATE", "UNDEF3",     "LIGHT",
     "LIGHT2", "UNDEF3",      "MISC_TOGGLE"};
 
-/*! sequence containing the
- * names of keyboard keys we can send through binding actions.
- * These correspond to KEY_xxx value definitions in <linux/input.h>,
+/*! sequence containing the names of keyboard keys we can send through binding
+ * actions. These correspond to KEY_xxx value definitions in <linux/input.h>,
  * i.e. ESC is KEY_ESC, 1 is KEY_1, etc.
+ *
+ * Note: later found in <linux/input-event-codes.h>
  */
 // formerly KB_INPUT_KEY_SEQ
 // clang-format off
