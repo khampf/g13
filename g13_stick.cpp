@@ -113,6 +113,11 @@ void G13_Stick::ParseJoystick(const unsigned char *buf) {
 
   // update targets if we're in calibration mode
   switch (m_stick_mode) {
+  case STICK_ABSOLUTE:
+    break;
+  case STICK_KEYS:
+    break;
+
   case STICK_CALCENTER:
     m_center_pos = m_current_pos;
     return;
@@ -124,13 +129,10 @@ void G13_Stick::ParseJoystick(const unsigned char *buf) {
   case STICK_CALBOUNDS:
     m_bounds.expand(m_current_pos);
     return;
-
-  case STICK_ABSOLUTE:
-    break;
-  case STICK_KEYS:
-    break;
   }
-
+/* TODO: Transform zone so we're not constantly transforming position
+ *  Is this even necessary? Zones could just be tweaked manually and
+ *  north is currently unused. Four-point zones would be more powerful
   // determine our normalized position
   double dx; // = 0.5
   if (m_current_pos.x <= m_center_pos.x) {
@@ -153,13 +155,14 @@ void G13_Stick::ParseJoystick(const unsigned char *buf) {
 
   G13_DBG("x=" << m_current_pos.x << " y=" << m_current_pos.y << " dx=" << dx
                << " dy=" << dy);
-  G13_ZoneCoord jpos(dx, dy);
+  G13_ZoneCoord jpos(dx, dy);*/
   if (m_stick_mode == STICK_ABSOLUTE) {
     _keypad.SendEvent(EV_ABS, ABS_X, m_current_pos.x);
     _keypad.SendEvent(EV_ABS, ABS_Y, m_current_pos.y);
 
   } else if (m_stick_mode == STICK_KEYS) {
     // BOOST_FOREACH (G13_StickZone& zone, m_zones) { zone.test(jpos); }
+    G13_ZoneCoord jpos(m_current_pos.x, m_current_pos.y);
     for (auto &zone : m_zones) {
       zone.test(jpos);
     }

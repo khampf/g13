@@ -193,7 +193,7 @@ void G13_Device::ReadConfigFile(const std::string &filename) {
   std::ifstream s(filename);
 
   G13_OUT("reading configuration from " << filename);
-  if (s.fail()) G13_LOG(log4cpp::Priority::ERROR << strerror(errno));
+  if (s.fail()) G13_LOG(log4cpp::Priority::ERROR << "Error: " << strerror(errno));
   else while (s.good()) {
     // grab a line
     char buf[1024];
@@ -435,8 +435,13 @@ void G13_Device::InitCommands() {
             if (sscanf(remainder, "%lf %lf %lf %lf", &x1, &y1, &x2, &y2) != 4) {
               throw G13_CommandException("bad bounds format");
             }
-            zone->set_bounds(G13_ZoneBounds(x1, y1, x2, y2));
-
+            // TODO: Add center offset and bounds (or update zone)
+            zone->set_bounds(G13_ZoneBounds(
+              (unsigned char)(x1 * UCHAR_MAX),
+              (unsigned char)(y1 * UCHAR_MAX),
+              (unsigned char)(x2 * UCHAR_MAX),
+              (unsigned char)(y2 * UCHAR_MAX)
+            ));
           } else if (operation == "del") {
             m_stick.RemoveZone(*zone);
           } else {
