@@ -162,9 +162,8 @@ void G13_Stick::ParseJoystick(const unsigned char *buf) {
 
   } else if (m_stick_mode == STICK_KEYS) {
     // BOOST_FOREACH (G13_StickZone& zone, m_zones) { zone.test(jpos); }
-    G13_ZoneCoord jpos(m_current_pos.x, m_current_pos.y);
     for (auto &zone : m_zones) {
-      zone.test(jpos);
+      zone.test(G13_ZoneCoord(m_current_pos.x, m_current_pos.y));
     }
     return;
 
