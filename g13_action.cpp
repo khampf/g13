@@ -49,6 +49,7 @@ void G13_Action_Keys::act(G13_Device &g13, bool is_down) {
       G13_LOG(log4cpp::Priority::DEBUG << "sending KEY DOWN " << _key);
     }
     if (!_keysup.empty()) for (int i = _keys.size() - 1; i >= 0; i--) {
+      g13.SendEvent(EV_SYN, SYN_REPORT, 0);
       g13.SendEvent(EV_KEY, _keys[i], !is_down);
       G13_LOG(log4cpp::Priority::DEBUG << "sending KEY UP " << _keys[i]);
     }
@@ -61,6 +62,7 @@ void G13_Action_Keys::act(G13_Device &g13, bool is_down) {
         g13.SendEvent(EV_KEY, _key, !is_down);
         G13_LOG(log4cpp::Priority::DEBUG << "sending KEY DOWN " << _key);
       }
+      g13.SendEvent(EV_SYN, SYN_REPORT, 0);
       for (int i = _keysup.size() - 1; i >= 0; i--) {
         g13.SendEvent(EV_KEY, _keysup[i], is_down);
         G13_LOG(log4cpp::Priority::DEBUG << "sending KEY UP " << _keysup[i]);
