@@ -258,7 +258,7 @@ int G13_Manager::Run() {
         running = false;
       }
     }
-    std::this_thread::sleep_for(std::chrono::milliseconds(20));
+    std::this_thread::sleep_for(std::chrono::milliseconds(10));
   } while (running);
 
   Cleanup();
