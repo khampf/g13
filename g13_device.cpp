@@ -193,7 +193,7 @@ void G13_Device::ReadConfigFile(const std::string &filename) {
   std::ifstream s(filename);
 
   G13_OUT("reading configuration from " << filename);
-  if (s.fail()) G13_LOG(log4cpp::Priority::ERROR << "Error: " << strerror(errno));
+  if (s.fail()) G13_LOG(log4cpp::Priority::ERROR << strerror(errno));
   else while (s.good()) {
     // grab a line
     char buf[1024];
