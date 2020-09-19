@@ -12,6 +12,8 @@
 #include "logo.hpp"
 #include <fstream>
 #include <unistd.h>
+#include <chrono>
+#include <thread>
 
 namespace G13 {
 // *************************************************************************
@@ -186,6 +188,8 @@ int G13_Device::ReadKeypresses() {
     m_currentProfile->ParseKeys(buffer);
     SendEvent(EV_SYN, SYN_REPORT, 0);
   }
+  if (!error)
+    std::this_thread::sleep_for(std::chrono::milliseconds(10));
   return 0;
 }
 

@@ -10,8 +10,6 @@
 #include <libevdev-1.0/libevdev/libevdev.h>
 #include <log4cpp/OstreamAppender.hh>
 #include <memory>
-#include <chrono>
-#include <thread>
 
 namespace G13 {
 
@@ -258,7 +256,6 @@ int G13_Manager::Run() {
         running = false;
       }
     }
-    std::this_thread::sleep_for(std::chrono::milliseconds(10));
   } while (running);
 
   Cleanup();
