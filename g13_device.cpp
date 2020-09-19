@@ -174,7 +174,7 @@ int G13_Device::ReadKeypresses() {
   int size = 0;
   int error =
       libusb_interrupt_transfer(handle, LIBUSB_ENDPOINT_IN | G13_KEY_ENDPOINT,
-                                buffer, G13_REPORT_SIZE, &size, 100);
+                                buffer, G13_REPORT_SIZE, &size, G13_KEY_READ_TIMEOUT);
 
   if (error && error != LIBUSB_ERROR_TIMEOUT) {
     G13_ERR("Error while reading keys: " << DescribeLibusbErrorCode(error));
@@ -189,7 +189,7 @@ int G13_Device::ReadKeypresses() {
     SendEvent(EV_SYN, SYN_REPORT, 0);
   }
   if (!error)
-    std::this_thread::sleep_for(std::chrono::milliseconds(10));
+    std::this_thread::sleep_for(std::chrono::milliseconds(G13_KEY_READ_MIN_TIME));
   return 0;
 }
 
