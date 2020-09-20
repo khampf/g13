@@ -188,7 +188,7 @@ int G13_Device::ReadKeypresses() {
     m_currentProfile->ParseKeys(buffer);
     SendEvent(EV_SYN, SYN_REPORT, 0);
   }
-  if (!error)
+  if (G13_KEY_READ_MIN_TIME && !error)
     std::this_thread::sleep_for(std::chrono::milliseconds(G13_KEY_READ_MIN_TIME));
   return 0;
 }
