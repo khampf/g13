@@ -13,8 +13,8 @@ class G13_Device;
 
 typedef Helper::Coord<int> G13_StickCoord;
 typedef Helper::Bounds<int> G13_StickBounds;
-typedef Helper::Coord<double> G13_ZoneCoord;
-typedef Helper::Bounds<double> G13_ZoneBounds;
+typedef Helper::Coord<unsigned char> G13_ZoneCoord;
+typedef Helper::Bounds<unsigned char> G13_ZoneBounds;
 
 // *************************************************************************
 

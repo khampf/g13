@@ -19,7 +19,8 @@ namespace G13 {
     // const size_t G13_INTERFACE = 0;
     static const size_t G13_KEY_ENDPOINT = 1;
     static const size_t G13_LCD_ENDPOINT = 2;
-    // const size_t G13_KEY_READ_TIMEOUT = 0;
+    static const size_t G13_KEY_READ_TIMEOUT = 100;
+    static const size_t G13_KEY_READ_MIN_TIME = 0;
 
     // *************************************************************************
 

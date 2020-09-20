@@ -12,6 +12,8 @@
 #include "logo.hpp"
 #include <fstream>
 #include <unistd.h>
+#include <chrono>
+#include <thread>
 
 namespace G13 {
 // *************************************************************************
@@ -172,7 +174,7 @@ int G13_Device::ReadKeypresses() {
   int size = 0;
   int error =
       libusb_interrupt_transfer(handle, LIBUSB_ENDPOINT_IN | G13_KEY_ENDPOINT,
-                                buffer, G13_REPORT_SIZE, &size, 100);
+                                buffer, G13_REPORT_SIZE, &size, G13_KEY_READ_TIMEOUT);
 
   if (error && error != LIBUSB_ERROR_TIMEOUT) {
     G13_ERR("Error while reading keys: " << DescribeLibusbErrorCode(error));
@@ -186,6 +188,8 @@ int G13_Device::ReadKeypresses() {
     m_currentProfile->ParseKeys(buffer);
     SendEvent(EV_SYN, SYN_REPORT, 0);
   }
+  if (G13_KEY_READ_MIN_TIME && !error)
+    std::this_thread::sleep_for(std::chrono::milliseconds(G13_KEY_READ_MIN_TIME));
   return 0;
 }
 
@@ -435,8 +439,13 @@ void G13_Device::InitCommands() {
             if (sscanf(remainder, "%lf %lf %lf %lf", &x1, &y1, &x2, &y2) != 4) {
               throw G13_CommandException("bad bounds format");
             }
-            zone->set_bounds(G13_ZoneBounds(x1, y1, x2, y2));
-
+            // TODO: Add center offset and bounds (or update zone)
+            zone->set_bounds(G13_ZoneBounds(
+              (unsigned char)(x1 * UCHAR_MAX),
+              (unsigned char)(y1 * UCHAR_MAX),
+              (unsigned char)(x2 * UCHAR_MAX),
+              (unsigned char)(y2 * UCHAR_MAX)
+            ));
           } else if (operation == "del") {
             m_stick.RemoveZone(*zone);
           } else {
