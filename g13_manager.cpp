@@ -50,6 +50,7 @@ void G13_Manager::Cleanup() {
 void G13_Manager::InitKeynames() {
 
   int key_index = 0;
+  auto evmax = libevdev_event_type_get_max(EV_KEY);
 
   // setup maps to let us convert between strings and G13 key names
   for (auto &name : G13::G13_KEY_STRINGS) {
@@ -60,20 +61,13 @@ void G13_Manager::InitKeynames() {
   }
 
   // setup maps to let us convert between strings and linux key names
-  for (auto &symbol : G13::G13_SYMBOLS) {
-    auto keyname = std::string("KEY_" + std::string(symbol));
+  for (auto code = 0; code <= evmax; code++) {
+    auto keystr = libevdev_event_code_get_name(EV_KEY, code);
 
-    int code = libevdev_event_code_from_name(EV_KEY, keyname.c_str());
-    if (code < 0) {
-      G13_ERR("No input event code found for " << keyname);
-    } else {
-      // TODO: this seems to map ok but the result is off
-      // assert(keyname.compare(libevdev_event_code_get_name(EV_KEY,code)) ==
-      // 0); linux/input-event-codes.h
-
-      input_key_to_name[code] = symbol;
-      input_name_to_key[symbol] = code;
-      G13_DBG("mapping " << symbol << " " << keyname << "=" << code);
+    if (keystr && !strncmp(keystr, "KEY_", 4)) {
+      input_key_to_name[code] = keystr + 4;
+      input_name_to_key[keystr + 4] = code;
+      G13_DBG("mapping " << (keystr + 4) << " " << keystr << "=" << code);
     }
   }
 
