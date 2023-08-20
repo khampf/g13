@@ -22,7 +22,6 @@ class G13_StickZone;
 
 enum stick_mode_t {
   STICK_ABSOLUTE,
-  // STICK_RELATIVE,
   STICK_KEYS,
   STICK_CALCENTER,
   STICK_CALBOUNDS,

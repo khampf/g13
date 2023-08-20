@@ -116,9 +116,9 @@ default. Example:
 ### Actions
 
 Various parts of configuring the G13 depend on assigning actions to occur based on something happening to the G13. 
-* key, possible values shown upon startup  (e.g. ***KEY_LEFTSHIFT***).
-* multiple keys,  like ***KEY_LEFTSHIFT+KEY_F1***
-* keys on release,  like ***KEY_LEFTSHIFT+KEY_F1 KEY_LEFTSHIFT+KEY_F2***
+* key, possible values shown upon startup  (e.g. ***LEFTSHIFT***).
+* multiple keys,  like ***LEFTSHIFT+F1***
+* keys on release,  like ***LEFTSHIFT+F1 LEFTSHIFT+F2***
 * pipe output, by using ">" followed by text, as in ***>Hello*** - causing **Hello** (plus newline) to be written to the output pipe ( **/tmp/g13-0_out** by default )
 * command, by using "!" followed by text, as in ***!stick_mode KEYS*** 
 
@@ -147,7 +147,6 @@ Mode       | Description
 -----------|---------------------------
 KEYS       | translates stick movements into key / action bindings
 ABSOLUTE   | stick becomes mouse with absolute positioning
-RELATIVE   | not quite working yet...
 CALCENTER  | calibrate stick center position
 CALBOUNDS  | calibrate stick boundaries
 CALNORTH   | calibrate stick north
@@ -165,7 +164,7 @@ del       | remove zone named *zonename*
 action    | set action for zone, see [Actions]  
 bounds    | set boundaries for zone, *args* are X1, Y1, X2, Y2, where X1/Y1 are top left corner, X2/Y2 are bottom right corner 
 
-Default created zones are LEFT, RIGHT, UP and DOWN.
+Default created zones are STICK_LEFT, STICK_RIGHT, STICK_UP, STICK_DOWN, STICK_PAGEUP and STICK_PAGEDOWN.
 
 Zone boundary coordinates are based on a floating point value from 0.0 (top/left) to 1.0 (bottom/right).  When the 
 stick enters the boundary area, the zone's action ***down*** activity will be fired.  On exiting the boundary, the
@@ -175,7 +174,7 @@ Example:
 
     stickzone add TheBottomLeft
     stickzone bounds TheBottomLeft 0.0 0.9 0.1 1.0
-    stickzone action KEY_END
+    stickzone action TheBottomLeft END
 
 ### pos *row* *col*
 

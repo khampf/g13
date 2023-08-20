@@ -401,9 +401,9 @@ void G13_Device::InitCommands() {
       _command_table, "stickmode", [this](const char *remainder) {
         std::string mode = remainder;
         // TODO: this could be part of a G13::Constants class I think
-        const std::set<std::string> modes = {"ABSOLUTE",  "RELATIVE",
-                                             "KEYS",      "CALCENTER",
-                                             "CALBOUNDS", "CALNORTH"};
+        const std::string modes[] = {"ABSOLUTE",  "KEYS",
+                                     "CALCENTER", "CALBOUNDS",
+                                     "CALNORTH"};
         int index = 0;
         for (auto &test : modes) {
           if (test == mode) {
