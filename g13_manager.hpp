@@ -13,7 +13,9 @@
 #include "g13_manager.hpp"
 #include <libusb-1.0/libusb.h>
 
-#define CONTROL_DIR std::string("/tmp/")
+#ifndef CONTROL_DIR
+#define CONTROL_DIR "/tmp"
+#endif
 
 /*!
  * top level class, holds what would otherwise be in global variables

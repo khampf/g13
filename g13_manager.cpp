@@ -116,7 +116,8 @@ std::string G13_Manager::MakePipeName(G13::G13_Device *d, bool is_input) {
         return config_base + "-" + std::to_string(d->id_within_manager());
       }
     }
-    return CONTROL_DIR + "g13-" + std::to_string(d->id_within_manager());
+    return std::string(CONTROL_DIR) + "/g13-" +
+           std::to_string(d->id_within_manager());
   } else {
     std::string config_base = getStringConfigValue("pipe_out");
     if (!config_base.empty()) {
@@ -127,8 +128,8 @@ std::string G13_Manager::MakePipeName(G13::G13_Device *d, bool is_input) {
       }
     }
 
-    return CONTROL_DIR + "g13-" + std::to_string(d->id_within_manager()) +
-           "_out";
+    return std::string(CONTROL_DIR) + "/g13-" +
+           std::to_string(d->id_within_manager()) + "_out";
   }
 }
 
