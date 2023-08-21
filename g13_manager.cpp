@@ -107,30 +107,20 @@ void G13_Manager::setStringConfigValue(const std::string &name,
 }
 
 std::string G13_Manager::MakePipeName(G13::G13_Device *d, bool is_input) {
-  if (is_input) {
-    std::string config_base = getStringConfigValue("pipe_in");
+  auto pipename = [&](const char *param, const char *suffix) -> std::string {
+    std::string config_base = getStringConfigValue(param);
     if (!config_base.empty()) {
-      if (d->id_within_manager() == 0) {
+      if (d->id_within_manager() == 0)
         return config_base;
-      } else {
-        return config_base + "-" + std::to_string(d->id_within_manager());
-      }
+      return config_base + "-" + std::to_string(d->id_within_manager());
     }
     return std::string(CONTROL_DIR) + "/g13-" +
-           std::to_string(d->id_within_manager());
-  } else {
-    std::string config_base = getStringConfigValue("pipe_out");
-    if (!config_base.empty()) {
-      if (d->id_within_manager() == 0) {
-        return config_base;
-      } else {
-        return config_base + "-" + std::to_string(d->id_within_manager());
-      }
-    }
+           std::to_string(d->id_within_manager()) + suffix;
+  };
 
-    return std::string(CONTROL_DIR) + "/g13-" +
-           std::to_string(d->id_within_manager()) + "_out";
-  }
+  if (is_input)
+    return pipename("pipe_in", "");
+  return pipename("pipe_out", "_out");
 }
 
 G13::LINUX_KEY_VALUE G13_Manager::FindG13KeyValue(const std::string &keyname) {

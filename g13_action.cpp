@@ -14,30 +14,23 @@ G13_Action::~G13_Action() = default;
 G13_Action_Keys::G13_Action_Keys(G13_Device &keypad,
                                  const std::string &keys_string)
     : G13_Action(keypad) {
-  auto keydownup = Helper::split<std::vector<std::string>>(keys_string, " ");
-  auto keys = Helper::split<std::vector<std::string>>(keydownup[0], "+");
 
-  for (auto &key : keys) {
-    auto kval = G13_Manager::Instance()->FindInputKeyValue(key);
-    if (kval == BAD_KEY_VALUE) {
-      throw G13_CommandException("create action unknown key : " + key);
-    }
-    _keys.push_back(kval);
-  }
-
-  if (keydownup.size()>1){
-    auto keysup = Helper::split<std::vector<std::string>>(keydownup[1], "+");
-    for (auto &key : keysup) {
+  auto scan = [](std::string in, std::vector<LINUX_KEY_VALUE> &out) {
+    auto keys = Helper::split<std::vector<std::string>>(in, "+");
+    for (auto &key : keys) {
       auto kval = G13_Manager::Instance()->FindInputKeyValue(key);
       if (kval == BAD_KEY_VALUE) {
         throw G13_CommandException("create action unknown key : " + key);
       }
-      _keysup.push_back(kval);
+      out.push_back(kval);
     }
-  }
+  };
 
-  std::vector<int> _keys_local;
-  std::vector<int> _keysup_local;
+  auto keydownup = Helper::split<std::vector<std::string>>(keys_string, " ");
+
+  scan(keydownup[0], _keys);
+  if (keydownup.size()>1)
+    scan(keydownup[1], _keysup);
 }
 
 G13_Action_Keys::~G13_Action_Keys() = default;
