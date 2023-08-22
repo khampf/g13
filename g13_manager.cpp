@@ -25,6 +25,7 @@ std::map<G13_KEY_INDEX, std::string> G13_Manager::g13_key_to_name;
 std::map<std::string, G13_KEY_INDEX> G13_Manager::g13_name_to_key;
 std::map<LINUX_KEY_VALUE, std::string> G13_Manager::input_key_to_name;
 std::map<std::string, LINUX_KEY_VALUE> G13_Manager::input_name_to_key;
+LINUX_KEY_VALUE G13_Manager::input_key_max;
 
 libusb_device **G13_Manager::devs;
 std::string G13_Manager::logoFilename;
@@ -50,7 +51,6 @@ void G13_Manager::Cleanup() {
 void G13_Manager::InitKeynames() {
 
   int key_index = 0;
-  auto evmax = libevdev_event_type_get_max(EV_KEY);
 
   // setup maps to let us convert between strings and G13 key names
   for (auto &name : G13::G13_KEY_STRINGS) {
@@ -61,7 +61,8 @@ void G13_Manager::InitKeynames() {
   }
 
   // setup maps to let us convert between strings and linux key names
-  for (auto code = 0; code <= evmax; code++) {
+  input_key_max = libevdev_event_type_get_max(EV_KEY) + 1;
+  for (auto code = 0; code < input_key_max; code++) {
     auto keystr = libevdev_event_code_get_name(EV_KEY, code);
 
     if (keystr && !strncmp(keystr, "KEY_", 4)) {
@@ -131,18 +132,23 @@ G13::LINUX_KEY_VALUE G13_Manager::FindG13KeyValue(const std::string &keyname) {
   return i->second;
 }
 
-G13::LINUX_KEY_VALUE
-G13_Manager::FindInputKeyValue(const std::string &keyname) {
+G13_State_Key
+G13_Manager::FindInputKeyValue(const std::string &keyname, bool down) {
+  // If this is a release action, reverse sense
+  if (!strncmp(keyname.c_str(), "-", 1)) {
+    return FindInputKeyValue(keyname.c_str() + 1, !down);
+  }
+
   // if there is a KEY_ prefix, strip it off
   if (!strncmp(keyname.c_str(), "KEY_", 4)) {
-    return FindInputKeyValue(keyname.c_str() + 4);
+    return FindInputKeyValue(keyname.c_str() + 4, down);
   }
 
   auto i = input_name_to_key.find(keyname);
   if (i == input_name_to_key.end()) {
     return G13::BAD_KEY_VALUE;
   }
-  return i->second;
+  return G13::G13_State_Key(i->second, down);
 }
 
 std::string G13_Manager::FindInputKeyName(G13::LINUX_KEY_VALUE v) {

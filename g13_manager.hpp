@@ -35,6 +35,7 @@ private:
   static std::map<std::string, G13_KEY_INDEX> g13_name_to_key;
   static std::map<LINUX_KEY_VALUE, std::string> input_key_to_name;
   static std::map<std::string, LINUX_KEY_VALUE> input_name_to_key;
+  static LINUX_KEY_VALUE input_key_max;
   static libusb_device **devs;
   static std::string logoFilename;
   static const int class_id;
@@ -50,10 +51,12 @@ public:
 
   [[nodiscard]] static std::string FindG13KeyName(int v);
 
-  [[nodiscard]] static G13::LINUX_KEY_VALUE
-  FindInputKeyValue(const std::string &keyname);
+  [[nodiscard]] static G13_State_Key
+  FindInputKeyValue(const std::string &keyname, bool down = true);
 
   [[nodiscard]] static std::string FindInputKeyName(G13::LINUX_KEY_VALUE v);
+
+  [[nodiscard]] static LINUX_KEY_VALUE InputKeyMax(void) {return input_key_max;}
 
   static int Run();
 

@@ -59,5 +59,22 @@ typedef int G13_KEY_INDEX;
 typedef int LINUX_KEY_VALUE;
 const LINUX_KEY_VALUE BAD_KEY_VALUE = -1;
 
+/*!
+ * a key code with up/down indicator
+ */
+class G13_State_Key {
+public:
+  G13_State_Key(LINUX_KEY_VALUE key = 0, bool down = true) {
+    _key = key;
+    _down = down;
+  }
+  LINUX_KEY_VALUE key(void) const { return _key; }
+  bool is_down(void) const { return _down; }
+
+private:
+  LINUX_KEY_VALUE _key;
+  bool _down;
+};
+
 } // namespace G13
 #endif // G13_G13_KEYS_HPP

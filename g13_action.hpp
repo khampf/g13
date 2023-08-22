@@ -60,8 +60,8 @@ public:
   void act(G13_Device &, bool is_down) override;
   void dump(std::ostream &) const override;
 
-  std::vector<LINUX_KEY_VALUE> _keys;
-  std::vector<LINUX_KEY_VALUE> _keysup;
+  std::vector<G13_State_Key> _keys;
+  std::vector<G13_State_Key> _keysup;
 };
 
 /*!

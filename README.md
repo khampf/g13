@@ -116,7 +116,7 @@ default. Example:
 ### Actions
 
 Various parts of configuring the G13 depend on assigning actions to occur based on something happening to the G13. 
-* key, possible values shown upon startup  (e.g. ***LEFTSHIFT***).
+* key, possible values shown upon startup  (e.g. ***LEFTSHIFT***). It may be prefixed with "-" to indicate a release action.
 * multiple keys,  like ***LEFTSHIFT+F1***
 * keys on release,  like ***LEFTSHIFT+F1 LEFTSHIFT+F2***
 * pipe output, by using ">" followed by text, as in ***>Hello*** - causing **Hello** (plus newline) to be written to the output pipe ( **/tmp/g13-0_out** by default )
