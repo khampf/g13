@@ -51,7 +51,7 @@ public:
 
   void Dump(std::ostream &o, int detail = 0);
 
-  void Command(char const *str);
+  void Command(char const *str, const char *info = nullptr);
 
   void ReadCommandsFromPipe();
 

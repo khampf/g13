@@ -201,21 +201,8 @@ void G13_Device::ReadConfigFile(const std::string &filename) {
     buf[sizeof(buf) - 1] = 0;
     s.getline(buf, sizeof(buf) - 1);
 
-    // strip comment
-    char *comment = strchr(buf, '#');
-    if (comment) {
-      comment--;
-      while (comment > buf && isspace(*comment))
-        comment--;
-      comment++;
-      *comment = 0;
-    }
-
     // send it
-    if (buf[0]) {
-      G13_OUT("  cfg: " << buf);
-      Command(buf);
-    }
+    Command(buf, "  cfg");
   }
 }
 
@@ -241,19 +228,8 @@ void G13_Device::ReadCommandsFromPipe() {
       auto lines = Helper::split<std::vector<std::string>>(
           buffer, "\n\r", Helper::split::no_empties);
 
-      for (auto &cmd : lines) {
-        auto command_comment = Helper::split<std::vector<std::string>>(
-            cmd, "#", Helper::split::no_empties);
-
-        if (!command_comment.empty() && command_comment[0] != std::string("")) {
-          while (isspace(command_comment[0].back()))
-            command_comment[0].pop_back();
-          if (command_comment[0] != std::string("")) {
-            G13_OUT("command: " << command_comment[0]);
-            Command(command_comment[0].c_str());
-          }
-        }
-      }
+      for (auto &cmd : lines)
+        Command(cmd.c_str(), "command");
     }
   }
 }
@@ -337,6 +313,7 @@ struct commandAdder {
 
 void G13_Device::InitCommands() {
   using Helper::advance_ws;
+  using Helper::ltrim;
   // const char *remainder;
 
   commandAdder add_out(_command_table, "out", [this](const char *remainder) {
@@ -345,7 +322,7 @@ void G13_Device::InitCommands() {
 
   commandAdder add_pos(_command_table, "pos", [this](const char *remainder) {
     int row, col;
-    if (sscanf(remainder, "%i %i", &row, &col) == 2) {
+    if (sscanf(remainder, " %i %i", &row, &col) == 2) {
       lcd().WritePos(row, col);
     } else {
       G13_ERR("bad pos : " << remainder);
@@ -353,9 +330,16 @@ void G13_Device::InitCommands() {
   });
 
   commandAdder add_bind(_command_table, "bind", [this](const char *remainder) {
-    std::string keyname;
+    const char *rawaction;
+    std::string keyname, action, actionup;
     advance_ws(remainder, keyname);
-    std::string action = remainder;
+    rawaction = ltrim(remainder);
+    advance_ws(remainder, action);
+    advance_ws(remainder, actionup);
+    if (!action.empty() && strchr("!>", action[0]))
+      action = std::string(rawaction);
+    else if (!actionup.empty())
+      action += std::string(" ") + actionup;
     try {
       if (auto key = m_currentProfile->FindKey(keyname)) {
         key->set_action(MakeAction(action));
@@ -373,11 +357,16 @@ void G13_Device::InitCommands() {
   });
 
   commandAdder add_profile(
-      _command_table, "profile",
-      [this](const char *remainder) { SwitchToProfile(remainder); });
+      _command_table, "profile", [this](const char *remainder) {
+        std::string profile;
+        advance_ws(remainder, profile);
+        SwitchToProfile(profile.c_str());
+      });
 
   commandAdder add_font(_command_table, "font", [this](const char *remainder) {
-    SwitchToFont(remainder);
+    std::string font;
+    advance_ws(remainder, font);
+    SwitchToFont(font.c_str());
   });
 
   commandAdder add_mod(_command_table, "mod", [this](const char *remainder) {
@@ -390,7 +379,7 @@ void G13_Device::InitCommands() {
 
   commandAdder add_rgb(_command_table, "rgb", [this](const char *remainder) {
     int red, green, blue;
-    if (sscanf(remainder, "%i %i %i", &red, &green, &blue) == 3) {
+    if (sscanf(remainder, " %i %i %i", &red, &green, &blue) == 3) {
       SetKeyColor(red, green, blue);
     } else {
       G13_ERR("rgb bad format: <" << remainder << ">");
@@ -399,7 +388,8 @@ void G13_Device::InitCommands() {
 
   commandAdder add_stickmode(
       _command_table, "stickmode", [this](const char *remainder) {
-        std::string mode = remainder;
+        std::string mode;
+        advance_ws(remainder, mode);
         // TODO: this could be part of a G13::Constants class I think
         const std::string modes[] = {"ABSOLUTE",  "KEYS",
                                      "CALCENTER", "CALBOUNDS",
@@ -432,7 +422,8 @@ void G13_Device::InitCommands() {
             zone->set_action(MakeAction(remainder));
           } else if (operation == "bounds") {
             double x1, y1, x2, y2;
-            if (sscanf(remainder, "%lf %lf %lf %lf", &x1, &y1, &x2, &y2) != 4) {
+            if (sscanf(remainder,
+                       " %lf %lf %lf %lf", &x1, &y1, &x2, &y2) != 4) {
               throw G13_CommandException("bad bounds format");
             }
             zone->set_bounds(G13_ZoneBounds(x1, y1, x2, y2));
@@ -477,21 +468,26 @@ void G13_Device::InitCommands() {
                          });
 }
 
-void G13_Device::Command(char const *str) {
+void G13_Device::Command(char const *str, const char *info) {
   const char *remainder = str;
 
   try {
     using Helper::advance_ws;
+    using Helper::ltrim;
 
     std::string cmd;
     advance_ws(remainder, cmd);
 
-    auto i = _command_table.find(cmd);
-    if (i == _command_table.end()) {
-      G13_ERR("unknown command : " << cmd);
-    } else {
-      COMMAND_FUNCTION f = i->second;
-      f(remainder);
+    if (cmd != "") {
+      auto i = _command_table.find(cmd);
+      if (info)
+        G13_OUT(info << ": " << ltrim(str));
+      if (i == _command_table.end()) {
+        G13_ERR("unknown command : " << cmd);
+      } else {
+        COMMAND_FUNCTION f = i->second;
+        f(remainder);
+      }
     }
   } catch (const std::exception &ex) {
     G13_ERR("command failed : " << ex.what());

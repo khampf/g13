@@ -140,15 +140,16 @@ std::ostream &operator<<(std::ostream &o, const Bounds<T> &b) {
 
 typedef const char *CCP;
 
+inline const char *ltrim(const char *string, const char *ws = " \t") {
+  return string + strspn(string, ws);
+}
+
 inline const char *advance_ws(CCP &source, std::string &dest) {
-  const char *space = source ? strchr(source, ' ') : nullptr;
-  if (space) {
-    dest = std::string(source, space - source);
-    source = space + 1;
-  } else {
-    dest = source;
-    source = nullptr;
-  }
+  size_t l;
+  source = ltrim(source);
+  l = strcspn(source, "# \t");
+  dest = std::string(source, l);
+  source = !source[l] || source[l] == '#'? "": source + l + 1;
   return source;
 }
 
