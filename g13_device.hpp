@@ -125,6 +125,7 @@ protected:
 
   int m_input_pipe_fid{};
   std::string m_input_pipe_name;
+  std::string m_input_pipe_fifo;
   int m_output_pipe_fid{};
   std::string m_output_pipe_name;
 

@@ -42,8 +42,7 @@ std::string G13_Device::DescribeLibusbErrorCode(int code) {
                        std::string(libusb_strerror((libusb_error)code));
   */
   auto description = std::string(libusb_strerror((libusb_error)code));
-  return std::move(description);
-  // return "unknown error";
+  return description;
 }
 
 int G13CreateFifo(const char *fifo_name) {
@@ -56,7 +55,6 @@ int G13CreateFifo(const char *fifo_name) {
 
 int G13CreateUinput(G13_Device *g13) {
   struct uinput_user_dev uinp {};
-  struct input_event event {};
   const char *dev_uinput_fname =
       access("/dev/input/uinput", F_OK) == 0
           ? "/dev/input/uinput"
@@ -76,7 +74,7 @@ int G13CreateUinput(G13_Device *g13) {
   }
   memset(&uinp, 0, sizeof(uinp));
   char name[] = "G13";
-  strncpy(uinp.name, name, sizeof(name));
+  memcpy(uinp.name, name, sizeof(name));
   uinp.id.version = 1;
   uinp.id.bustype = BUS_USB;
   uinp.id.product = G13_PRODUCT_ID;
@@ -215,21 +213,30 @@ void G13_Device::ReadCommandsFromPipe() {
   tv.tv_usec = 0;
   int ret = select(m_input_pipe_fid + 1, &set, nullptr, nullptr, &tv);
   if (ret > 0) {
-    unsigned char buf[1024 * 1024];
-    memset(buf, 0, 1024 * 1024);
-    ret = read(m_input_pipe_fid, buf, 1024 * 1024);
+    auto end = m_input_pipe_fifo.length();
+    char buf[1024 * 1024];
+    memcpy(buf, m_input_pipe_fifo.c_str(), end);
+    ret = read(m_input_pipe_fid, buf + end, sizeof buf - end);
     G13_LOG(log4cpp::Priority::DEBUG << "read " << ret << " characters");
 
-    if (ret ==
+    if (ret < 0)
+      ; // Read error: should not occur after successful select().
+    else if (ret + end ==
         960) { // TODO probably image, for now, don't test, just assume image
-      lcd().Image(buf, ret);
+      lcd().Image(reinterpret_cast<unsigned char *>(buf), ret + end);
     } else {
-      std::string buffer = reinterpret_cast<const char *>(buf);
-      auto lines = Helper::split<std::vector<std::string>>(
-          buffer, "\n\r", Helper::split::no_empties);
-
-      for (auto &cmd : lines)
-        Command(cmd.c_str(), "command");
+      size_t beg = 0;
+      for (ret += end; end < (size_t) ret; end++)
+        if (buf[end] == '\r' || buf[end] == '\n') {
+          if (end != beg) {
+            buf[end] = '\0';
+            Command(buf + beg, "command");
+          }
+          beg = end + 1;
+        }
+      m_input_pipe_fifo.clear();
+      if (ret - beg < sizeof buf)   // Drop too long lines.
+        m_input_pipe_fifo = std::string(buf + beg, ret - beg);
     }
   }
 }
