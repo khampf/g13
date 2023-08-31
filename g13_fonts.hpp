@@ -23,7 +23,7 @@ public:
     memset(bits_regular, 0, CHAR_BUF_SIZE);
     memset(bits_inverted, 0, CHAR_BUF_SIZE);
   }
-  void SetCharacter(unsigned char *data, int width, unsigned flags);
+  void SetCharacter(unsigned char *data, unsigned int width, unsigned flags);
   unsigned char bits_regular[CHAR_BUF_SIZE]{};
   unsigned char bits_inverted[CHAR_BUF_SIZE]{};
 };

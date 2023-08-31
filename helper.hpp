@@ -228,7 +228,13 @@ auto split(const typename Container::value_type &srcStr,
     next = srcStr.find_first_of(delimiters, current);
     result.push_back(srcStr.substr(current, next - current));
   } while (next != Container::value_type::npos);
-  return std::move(result);
+  return result;
+}
+
+// *************************************************************************
+// Ignore GCC Unused Result warning
+
+inline void IGUR(...) {
 }
 
 // *************************************************************************

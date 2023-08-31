@@ -372,7 +372,7 @@ G13_Font::G13_Font() : m_name("default"), m_width(8) {}
 G13_Font::G13_Font(std::string name, unsigned int width)
     : m_name(std::move(name)), m_width(width) {}
 
-void G13_FontChar::SetCharacter(unsigned char *data, int width,
+void G13_FontChar::SetCharacter(unsigned char *data, unsigned int width,
                                 unsigned flags) {
   unsigned char *dest = bits_regular;
   memset(dest, 0, CHAR_BUF_SIZE);
@@ -389,12 +389,12 @@ void G13_FontChar::SetCharacter(unsigned char *data, int width,
   } else {
     memcpy(dest, data, (size_t)width);
   }
-  for (int x = 0; x < width; x++) {
+  for (unsigned int x = 0; x < width; x++) {
     bits_inverted[x] = ~dest[x];
   }
 }
 
-template <typename T, int size> int GetFontCharacterCount(T (&)[size]) {
+template <typename T, size_t size> size_t GetFontCharacterCount(T (&)[size]) {
   return size;
 }
 

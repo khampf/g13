@@ -53,10 +53,10 @@ void G13_Manager::InitKeynames() {
   int key_index = 0;
 
   // setup maps to let us convert between strings and G13 key names
-  for (auto &name : G13::G13_KEY_STRINGS) {
-    g13_key_to_name[key_index] = name;
-    g13_name_to_key[name] = key_index;
-    G13_DBG("mapping G13 " << name << " = " << key_index);
+  for (auto name = G13_Key_Tables::G13_KEY_STRINGS; *name; name++) {
+    g13_key_to_name[key_index] = *name;
+    g13_name_to_key[*name] = key_index;
+    G13_DBG("mapping G13 " << *name << " = " << key_index);
     key_index++;
   }
 
@@ -73,9 +73,9 @@ void G13_Manager::InitKeynames() {
   }
 
   // setup maps to let us convert between strings and linux button names
-  for (auto &symbol : G13::G13_BTN_SEQ) {
-    auto name = std::string("M" + std::string(symbol));
-    auto keyname = std::string("BTN_" + std::string(symbol));
+  for (auto symbol = G13_Key_Tables::G13_BTN_SEQ; *symbol; symbol++) {
+    auto name = std::string("M" + std::string(*symbol));
+    auto keyname = std::string("BTN_" + std::string(*symbol));
     int code = libevdev_event_code_from_name(EV_KEY, keyname.c_str());
     if (code < 0) {
       G13_ERR("No input event code found for " << keyname);
@@ -168,7 +168,6 @@ std::string G13_Manager::FindG13KeyName(G13::G13_KEY_INDEX v) {
 }
 
 void G13_Manager::DisplayKeys() {
-  typedef std::map<std::string, int> mapType;
   G13_OUT("Known keys on G13:");
   G13_OUT(Helper::map_keys_out(g13_name_to_key));
 

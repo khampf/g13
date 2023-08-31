@@ -9,7 +9,6 @@
 #include "g13_manager.hpp"
 #include "g13_profile.hpp"
 #include "g13_stick.hpp"
-#include "logo.hpp"
 #include <fstream>
 #include <unistd.h>
 
@@ -18,8 +17,8 @@ namespace G13 {
 
 G13_Device::G13_Device(libusb_device *dev, libusb_context *ctx,
                        libusb_device_handle *handle, int m_id)
-    : m_lcd(*this), m_stick(*this), device(dev), handle(handle),
-      m_id_within_manager(m_id), m_uinput_fid(-1), m_ctx(ctx) {
+    : m_id_within_manager(m_id), m_ctx(ctx), m_uinput_fid(-1),
+      m_lcd(*this), m_stick(*this), handle(handle), device(dev) {
   m_currentProfile = std::make_shared<G13_Profile>(*this, "default");
   m_profiles["default"] = m_currentProfile;
 
@@ -122,16 +121,18 @@ int G13CreateUinput(G13_Device *g13) {
 // *************************************************************************
 
 void G13_Device::SendEvent(int type, int code, int val) {
+  using Helper::IGUR;
   memset(&m_event, 0, sizeof(m_event));
   gettimeofday(&m_event.time, nullptr);
   m_event.type = type;
   m_event.code = code;
   m_event.value = val;
-  write(m_uinput_fid, &m_event, sizeof(m_event));
+  IGUR(write(m_uinput_fid, &m_event, sizeof(m_event)));
 }
 
 void G13_Device::OutputPipeWrite(const std::string &out) const {
-  write(m_output_pipe_fid, out.c_str(), out.size());
+  using Helper::IGUR;
+  IGUR(write(m_output_pipe_fid, out.c_str(), out.size()));
 }
 
 void G13_Device::SetModeLeds(int leds) {

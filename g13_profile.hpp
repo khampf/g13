@@ -25,7 +25,7 @@ public:
   }
 
   G13_Profile(const G13_Profile &other, std::string name_arg)
-      : _keypad(other._keypad), _name(std::move(name_arg)), _keys(other._keys) {
+      : _keypad(other._keypad), _keys(other._keys), _name(std::move(name_arg)) {
   }
 
   // search key by G13 keyname

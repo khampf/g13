@@ -96,7 +96,7 @@ public:
 template <class PARENT_T> class G13_Actionable {
 public:
   G13_Actionable(PARENT_T &parent_arg, std::string name)
-      : _parent_ptr(&parent_arg), _name(std::move(name)) {}
+      : _name(std::move(name)), _parent_ptr(&parent_arg) {}
   virtual ~G13_Actionable() { _parent_ptr = nullptr; }
 
   [[nodiscard]] G13_ActionPtr action() const { return _action; }
@@ -174,9 +174,8 @@ public:
   void set_bounds(const G13_ZoneBounds &bounds) { _bounds = bounds; }
 
 protected:
-  bool _active;
-
   G13_ZoneBounds _bounds;
+  bool _active;
 };
 
 } // namespace G13
