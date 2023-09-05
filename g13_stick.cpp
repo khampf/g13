@@ -45,6 +45,16 @@ G13_StickZone *G13_Stick::zone(const std::string &name, bool create) {
   return nullptr;
 }
 
+std::vector<std::string>
+G13_Stick::FilteredZoneNames(const std::regex &pattern) {
+  std::vector<std::string> names;
+
+  for (auto zone: m_zones)
+    if (std::regex_match(zone.name(), pattern))
+      names.emplace_back(zone.name());
+  return names;
+}
+
 void G13_Stick::set_mode(stick_mode_t m) {
   if (m == m_stick_mode)
     return;

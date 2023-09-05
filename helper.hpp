@@ -31,6 +31,7 @@
 #ifndef __HELPER_HPP__
 #define __HELPER_HPP__
 
+#include <string>
 #include <cstring>
 #include <iomanip>
 #include <map>
@@ -236,6 +237,11 @@ auto split(const typename Container::value_type &srcStr,
 
 inline void IGUR(...) {
 }
+
+// *************************************************************************
+// Translate a glob pattern into a regular expression
+
+std::string glob2regex(const char *glob);
 
 // *************************************************************************
 

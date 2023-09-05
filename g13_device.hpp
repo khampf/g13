@@ -12,7 +12,9 @@
 #include <libusb-1.0/libusb.h>
 #include <linux/uinput.h>
 #include <map>
+#include <vector>
 #include <memory>
+#include <regex>
 
 namespace G13 {
 // *************************************************************************
@@ -46,6 +48,8 @@ public:
   FontPtr SwitchToFont(const std::string &name);
 
   void SwitchToProfile(const std::string &name);
+
+  std::vector<std::string> FilteredProfileNames(const std::regex &pattern);
 
   ProfilePtr Profile(const std::string &name);
 

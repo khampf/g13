@@ -10,6 +10,7 @@
 #include "g13_profile.hpp"
 #include "g13_stick.hpp"
 #include <fstream>
+#include <regex>
 #include <unistd.h>
 
 namespace G13 {
@@ -254,6 +255,16 @@ void G13_Device::SwitchToProfile(const std::string &name) {
   m_currentProfile = Profile(name);
 }
 
+std::vector<std::string>
+G13_Device::FilteredProfileNames(const std::regex &pattern) {
+  std::vector<std::string> names;
+
+  for (auto &profile: m_profiles)
+    if (std::regex_match(profile.first, pattern))
+      names.emplace_back(profile.first);
+  return names;
+}
+
 ProfilePtr G13_Device::Profile(const std::string &name) {
   ProfilePtr rv = m_profiles[name];
   if (!rv) {
@@ -322,6 +333,7 @@ struct commandAdder {
 void G13_Device::InitCommands() {
   using Helper::advance_ws;
   using Helper::ltrim;
+  using Helper::glob2regex;
   // const char *remainder;
 
   commandAdder add_out(_command_table, "out", [this](const char *remainder) {
@@ -474,6 +486,41 @@ void G13_Device::InitCommands() {
                            lcd().image_clear();
                            lcd().image_send();
                          });
+
+  commandAdder add_delete(_command_table, "delete",
+                          [this](const char *remainder) {
+    std::string target;
+    std::string glob;
+    bool found = false;
+    advance_ws(remainder, target);
+    advance_ws(remainder, glob);
+    std::regex re(glob2regex(glob.c_str()));
+
+    if (target == "profile") {
+      for (auto &profile: FilteredProfileNames(re)) {
+        m_profiles.erase(profile);
+        G13_OUT("profile " << profile << " deleted");
+        found = true;
+      }
+    } else if (target == "key") {
+      for (auto key: m_currentProfile->FilteredKeyNames(re)) {
+        m_currentProfile->FindKey(key)->set_action(nullptr);
+        G13_OUT("key " << key << " unbound");
+        found = true;
+      }
+    } else if (target == "zone") {
+      for (auto &zone: m_stick.FilteredZoneNames(re)) {
+        m_stick.RemoveZone(*m_stick.zone(zone));
+        G13_OUT("stickzone " << zone << " unbound");
+        found = true;
+      }
+    } else {
+      G13_ERR("unknown delete target: <" << target << ">");
+      found = true;
+    }
+    if (!found)
+      G13_OUT("no " << target << " name matches <" << glob << ">");
+  });
 }
 
 void G13_Device::Command(char const *str, const char *info) {

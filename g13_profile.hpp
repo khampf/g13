@@ -5,6 +5,7 @@
 #ifndef G13_G13_PROFILE_HPP
 #define G13_G13_PROFILE_HPP
 
+#include <regex>
 #include "g13.hpp"
 #include "g13_action.hpp"
 #include "g13_device.hpp"
@@ -30,6 +31,9 @@ public:
 
   // search key by G13 keyname
   G13::G13_Key *FindKey(const std::string &keyname);
+
+  std::vector<std::string> FilteredKeyNames(const std::regex &pattern,
+                                            bool all = false);
 
   void dump(std::ostream &o) const;
 

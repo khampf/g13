@@ -120,7 +120,7 @@ Various parts of configuring the G13 depend on assigning actions to occur based 
 * multiple keys,  like ***LEFTSHIFT+F1***
 * keys on release,  like ***LEFTSHIFT+F1 LEFTSHIFT+F2***
 * pipe output, by using ">" followed by text, as in ***>Hello*** - causing **Hello** (plus newline) to be written to the output pipe ( **/tmp/g13-0_out** by default )
-* command, by using "!" followed by text, as in ***!stick_mode KEYS*** 
+* command, by using "!" followed by text, as in ***!stickmode KEYS*** 
 
 ## Commands
 
@@ -175,6 +175,16 @@ Example:
     stickzone add TheBottomLeft
     stickzone bounds TheBottomLeft 0.0 0.9 0.1 1.0
     stickzone action TheBottomLeft END
+
+### delete *key|zone|profile* *glob-pattern*
+
+Deletes the objects whose names match the given *glob-pattern*.
+
+Examples:
+
+    delete zone STICK_PAGE*
+    delete profile WoW
+    delete key M[1-3]
 
 ### pos *row* *col*
 

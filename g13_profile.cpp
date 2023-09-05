@@ -61,4 +61,15 @@ G13_Key *G13_Profile::FindKey(const std::string &keyname) {
   }
   return nullptr;
 }
-} // namespace G13
+
+std::vector<std::string>
+G13_Profile::FilteredKeyNames(const std::regex &pattern, bool all) {
+  std::vector<std::string> names;
+  
+  for (auto &key: _keys)
+    if (all || key.action())
+      if (std::regex_match(key.name(), pattern))
+        names.emplace_back(key.name());
+  return names;
+}
+} // namespace G1pattern
