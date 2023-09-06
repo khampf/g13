@@ -101,6 +101,7 @@ Option 				|  Description
  --config *arg*     | load config commands from file
  --pipe_in *arg*    | specify name for input pipe
  --pipe_out *arg*   | specify name for output pipe
+ --umask *octal*    | specify umask for pipes creation
 
 ## Configuring / Remote Control
 

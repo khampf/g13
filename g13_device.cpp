@@ -46,12 +46,18 @@ std::string G13_Device::DescribeLibusbErrorCode(int code) {
   return description;
 }
 
-int G13CreateFifo(const char *fifo_name) {
+static int G13CreateFifo(const char *fifo_name, mode_t umask) {
+  int fd;
+
+  umask |= std::stoi(std::string("0") +
+                     G13_Manager::Instance()->getStringConfigValue("umask"),
+                     nullptr, 8);
   // mkfifo(g13->fifo_name(), 0777); - didn't work
   mkfifo(fifo_name, 0666);
-  chmod(fifo_name, 0777);
+  fd = open(fifo_name, O_RDWR | O_NONBLOCK);
+  chmod(fifo_name, 0777 & ~umask);
 
-  return open(fifo_name, O_RDWR | O_NONBLOCK);
+  return fd;
 }
 
 int G13CreateUinput(G13_Device *g13) {
@@ -609,12 +615,14 @@ void G13_Device::RegisterContext(libusb_context *libusbContext) {
 
   m_uinput_fid = G13CreateUinput(this);
   m_input_pipe_name = G13_Manager::Instance()->MakePipeName(this, true);
-  m_input_pipe_fid = G13CreateFifo(m_input_pipe_name.c_str());
+  m_input_pipe_fid = G13CreateFifo(m_input_pipe_name.c_str(),
+                                   S_IRGRP | S_IROTH);
   if (m_input_pipe_fid == -1) {
     G13_ERR("failed opening input pipe " << m_input_pipe_name);
   }
   m_output_pipe_name = G13_Manager::Instance()->MakePipeName(this, false);
-  m_output_pipe_fid = G13CreateFifo(m_output_pipe_name.c_str());
+  m_output_pipe_fid = G13CreateFifo(m_output_pipe_name.c_str(),
+                                    S_IWGRP | S_IWOTH);
   if (m_output_pipe_fid == -1) {
     G13_ERR("failed opening output pipe " << m_output_pipe_name);
   }
