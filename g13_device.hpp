@@ -59,6 +59,9 @@ public:
 
   void ReadCommandsFromPipe();
 
+  void ReadCommandsFromFile(const std::string &filename,
+                            const char *info = nullptr);
+
   void ReadConfigFile(const std::string &filename);
 
   int ReadKeypresses();
@@ -137,6 +140,7 @@ protected:
   FontPtr m_currentFont;
   std::map<std::string, ProfilePtr> m_profiles;
   ProfilePtr m_currentProfile;
+  std::vector<std::string> m_filesLoading;
 
   G13_LCD m_lcd;
   G13_Stick m_stick;

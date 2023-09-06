@@ -11,6 +11,7 @@
 #include "g13_stick.hpp"
 #include <fstream>
 #include <regex>
+#include <filesystem>
 #include <unistd.h>
 
 namespace G13 {
@@ -189,10 +190,42 @@ int G13_Device::ReadKeypresses() {
   return 0;
 }
 
-void G13_Device::ReadConfigFile(const std::string &filename) {
-  std::ifstream s(filename);
+void G13_Device::ReadCommandsFromFile(const std::string &filename,
+                                      const char *info) {
+  using std::filesystem::path;
 
-  G13_OUT("reading configuration from " << filename);
+  class in_use {        // Handle file name stack.
+  public:
+    in_use(G13_Device *dev, const std::string &filename) {
+      m_dev = dev;
+      m_dev->m_filesLoading.emplace_back(filename);
+    }
+    ~in_use() { m_dev->m_filesLoading.pop_back(); }
+  private:
+    G13_Device *m_dev;
+  };
+
+  auto filepath = path(filename);
+
+  // If relative and loaded from a file, use previous file directory as base.
+  if (filepath.is_relative() && m_filesLoading.size()) {
+    auto p = path(m_filesLoading.back());
+    filepath = p.replace_filename(filepath);
+  }
+
+  filepath = filepath.lexically_normal();
+  std::string fn(filepath);
+
+  // Check for load recursion.
+  for (auto &f: m_filesLoading)
+    if (f == fn) {
+      G13_ERR(filename << " loading recursion");
+      return;
+    }
+
+  in_use autoclean(this, fn);
+  std::ifstream s(fn);
+
   if (s.fail()) G13_LOG(log4cpp::Priority::ERROR << strerror(errno));
   else while (s.good()) {
     // grab a line
@@ -202,8 +235,14 @@ void G13_Device::ReadConfigFile(const std::string &filename) {
     s.getline(buf, sizeof(buf) - 1);
 
     // send it
-    Command(buf, "  cfg");
+    Command(buf, info);
   }
+}
+
+void G13_Device::ReadConfigFile(const std::string &filename) {
+
+  G13_OUT("reading configuration from " << filename);
+  ReadCommandsFromFile(filename, "  cfg");
 }
 
 void G13_Device::ReadCommandsFromPipe() {
@@ -520,6 +559,13 @@ void G13_Device::InitCommands() {
     }
     if (!found)
       G13_OUT("no " << target << " name matches <" << glob << ">");
+  });
+
+  commandAdder add_load(_command_table, "load", [this](const char *remainder) {
+    std::string filename;
+    advance_ws(remainder, filename);
+    ReadCommandsFromFile(filename,
+                         std::string(1 + m_filesLoading.size(), '>').c_str());
   });
 }
 
