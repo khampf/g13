@@ -1,0 +1,266 @@
+#!/usr/bin/python
+
+#   Converts Logitech XML profiles into a G13 command file.
+#   Usage: xml2config [-h] [-o <FILE>] [<FILE> ...]
+#
+#   G13 keys L1-L4 selects the first 4 profiles and resets state to 1.
+#   G13 keys M1-M3 change the current state.
+
+
+from __future__ import print_function
+
+import sys
+import os
+import io
+import argparse
+import xml.etree.ElementTree as et
+
+g13_button_map = {
+    'G23': 'LEFT',
+    'G24': 'DOWN',
+    'G25': 'TOP',
+    'G26': 'STICK_UP',
+    'G27': 'STICK_RIGHT',
+    'G28': 'STICK_DOWN',
+    'G29': 'STICK_LEFT'
+}
+
+keyboard_key_map = {
+    'LSHIFT':       'LEFTSHIFT',
+    'LCTRL':        'LEFTCTRL',
+    'LALT':         'LEFTALT',
+    'LBRACKET':     'LEFTBRACE',
+    'RSHIFT':       'RIGHTSHIFT',
+    'RCTRL':        'RIGHTCTRL',
+    'RALT':         'RIGHTALT',
+    'RBRACKET':     'RIGHTBRACE',
+	'NUM0':         'NUMERIC_0',
+	'NUM1':         'NUMERIC_1',
+	'NUM2':         'NUMERIC_2',
+	'NUM3':         'NUMERIC_3',
+	'NUM4':         'NUMERIC_4',
+	'NUM5':         'NUMERIC_5',
+	'NUM6':         'NUMERIC_6',
+	'NUM7':         'NUMERIC_7',
+	'NUM8':         'NUMERIC_8',
+	'NUM9':         'NUMERIC_9',
+	'NUM11':        'NUMERIC_11',
+	'NUM12':        'NUMERIC_12',
+    'SPACEBAR':     'SPACE',
+    'TILDE':        'GRAVE',
+    'ESCAPE':       'ESC',
+    'NON_US_SLASH': '102ND',
+}
+
+keyboard_modifiers = {
+    'LSHIFT',
+    'LCTRL',
+    'LALT',
+    'RSHIFT',
+    'RCTRL',
+    'RALT',
+}
+
+me = os.path.splitext(os.path.basename(sys.argv[0]))[0]
+outstream = sys.stdout;
+
+
+def out(*args, **kwargs):
+    kwargs['file'] = outstream
+    print(*args, **kwargs)
+
+
+def load_profiles(db, f, fn='<stdin>'):
+    def drop_namespaces(el):
+        i = el.tag.rfind('}')
+        if i >= 0:
+            el.tag = el.tag[i+1:]
+        for child in el:
+            drop_namespaces(child)
+
+    try:
+        doc = et.parse(f)
+    except Exception as e:
+        print('Cannot parse %s: %s' % (fn, str(e)), file=sys.stderr)
+        return;
+
+    root = doc.getroot()
+    drop_namespaces(root)
+    if not root.tag == 'profiles':
+        print(fn + ' is not a Logitech G13 XML file', file=sys.stderr)
+        return
+
+    for profile in root.findall('profile'):
+        db.append(profile)
+
+
+def keyboard_keys(macro):
+    def stroke2keys(stroke):
+        key = None
+        modifier = set()
+        for el in stroke:
+            if el.tag == 'key':
+                key = el.get('value')
+            elif el.tag == 'modifier':
+                modifier.add(el.get('value'))
+        #   Transform into a multikey.
+        if key is None:
+            return []
+        keys = list(modifier)
+        keys.append(key)
+        keys = [keyboard_key_map.get(x, x) for x in keys]
+        return keys + ['-%s' % x for x in reversed(keys)]
+
+    def multikey2keys(multikey):
+        def press(key):
+            keys.append(keyboard_key_map.get(key, key))
+            down.add(key)
+
+        def release(key):
+            keys.append('-' + keyboard_key_map.get(key, key))
+            down.discard(key)
+
+        keys = []
+        down = set()
+        dirty = {}
+        for el in multikey.findall('key'):
+            key = el.get('value')
+            up = el.get('direction') == 'up'
+            if up:
+                if key in keyboard_modifiers:
+                    dirty[key] = key in down
+            elif not key in keyboard_modifiers:
+                if key in down:
+                    release(key)
+                for m in dirty:
+                    if dirty[m]:
+                        release(m)
+                    dirty = {}
+                press(key)
+            else:
+                if not key in down:
+                    press(key)
+                dirty[key] = False
+        for key in list(down):
+            release(key)
+        return keys
+
+    keys = []
+    for el in macro:
+        if el.tag == 'keystroke':
+            keys += stroke2keys(el)
+        elif el.tag == 'multikey':
+            keys += multikey2keys(el)
+    while keys and keys[-1][0] == '-':
+        keys.pop()
+    return keys
+
+
+#   Parse command line.
+
+parser = argparse.ArgumentParser(me,
+        description='Convert G13 XML profiles to Linux configuration file')
+parser.add_argument('-o', metavar='<FILE>', help='output file name')
+parser.add_argument('file', nargs='*', metavar='<FILE>',
+                    help='input file name(s)')
+
+args = parser.parse_args()
+
+#   Load XML input files.
+db = et.XML('<profiles />')
+if not args.file:
+    load_profiles(db, sys.stdin)
+else:
+    for file in args.file:
+        with open(file, 'r') as f:
+            load_profiles(db, f, file)
+
+#   Get all usable profiles.
+profiles = []
+for profile in db:
+    profile_guid = profile.get('guid')
+    macros = profile.find('macros')
+    assignments = profile.find("assignments[@devicecategory='Logitech.Gaming.LeftHandedController']")
+    if profile_guid and not (macros is None or assignments is None):
+       profiles.append(profile)
+
+#   Redirect output if needed.
+if args.o:
+    outstream = open(args.o, 'w')
+
+#   Output configuration preamble.
+out('delete profile *')
+out('delete key *')
+out('delete zone *')
+out('profile default')
+out('stickzone add STICK_UP')
+out('stickzone bounds STICK_UP 0.0 0.0 1.0 0.3')
+out('stickzone add STICK_DOWN')
+out('stickzone bounds STICK_DOWN 0.0 0.7 1.0 1.0')
+out('stickzone add STICK_LEFT')
+out('stickzone bounds STICK_LEFT 0.0 0.0 0.3 1.0')
+out('stickzone add STICK_RIGHT')
+out('stickzone bounds STICK_RIGHT 0.7 0.0 1.0 1.0')
+out('stickmode KEYS')
+
+#   Bind the first four profiles to L1-L4 keys.
+for n, profile in enumerate(profiles):
+    if n <= 4:
+        name = profile.get('name')
+        if name:
+            name = '  # ' + name
+        out('bind L%u !profile %s-1%s' % (n + 1, profile.get('guid'), name))
+
+#   Generate each profile.
+for profile in profiles:
+    name = profile.get('name')
+    description = profile.find('description')
+    if not description is None:
+        description = ''.join(description.itertext()).strip()
+    else:
+        description = ''
+    description = description.splitlines()
+    out('')
+    if name or description:
+        if name:
+            out('#\t' + name)
+            if description:
+                out('#')
+        if description:
+            for l in description:
+                out('# ' + l)
+    guid = profile.get('guid')
+    macros = profile.find('macros')
+    assignments = profile.find("assignments[@devicecategory='Logitech.Gaming.LeftHandedController']")
+
+    #   Generate each state.
+    for state in '123':
+        out('profile ' + guid + '-' + state)
+        #   Generate key bindings.
+        active = set()
+        asgs = assignments.findall("assignment[@shiftstate='%s']" % state)
+        asgs.sort(key=lambda x: (x.get('contextid')[1:],
+                                 x.get('backup') == 'true'))
+        for asg in asgs:
+            button = asg.get('contextid')
+            macro = macros.find("macro[@guid='%s']" % asg.get('macroguid'))
+            if not (macro is None or button in active):
+                keys = keyboard_keys(macro)
+                if keys:
+                    active.add(button)
+                    name = macro.get('name')
+                    if name:
+                        name = '  # ' + name
+                    button = g13_button_map.get(button, button)
+                    out('bind %s %s%s' %
+                        (button, '+'.join(str(x) for x in keys), name))
+
+        #   Generate state change action bindings on M1-M3.
+        for st in '123':
+            out('bind M%s !profile %s-%s' % (st, guid, st))
+        out('profile default')
+
+#   Select first profile in state 1.
+for profile in profiles:
+    out('\nprofile %s-1' % profile.get('guid'))
+    break

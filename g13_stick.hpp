@@ -6,6 +6,7 @@
 #define G13_G13_STICK_HPP
 
 #include <vector>
+#include <regex>
 #include "helper.hpp"
 
 namespace G13 {
@@ -22,7 +23,6 @@ class G13_StickZone;
 
 enum stick_mode_t {
   STICK_ABSOLUTE,
-  // STICK_RELATIVE,
   STICK_KEYS,
   STICK_CALCENTER,
   STICK_CALBOUNDS,
@@ -37,6 +37,7 @@ public:
 
   void set_mode(stick_mode_t);
   G13_StickZone *zone(const std::string &, bool create = false);
+  std::vector<std::string> FilteredZoneNames(const std::regex &pattern);
   void RemoveZone(const G13_StickZone &zone);
 
   /*

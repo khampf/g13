@@ -14,58 +14,62 @@ G13_Action::~G13_Action() = default;
 G13_Action_Keys::G13_Action_Keys(G13_Device &keypad,
                                  const std::string &keys_string)
     : G13_Action(keypad) {
-  auto keydownup = Helper::split<std::vector<std::string>>(keys_string, " ");
-  auto keys = Helper::split<std::vector<std::string>>(keydownup[0], "+");
 
-  for (auto &key : keys) {
-    auto kval = G13_Manager::Instance()->FindInputKeyValue(key);
-    if (kval == BAD_KEY_VALUE) {
-      throw G13_CommandException("create action unknown key : " + key);
-    }
-    _keys.push_back(kval);
-  }
-
-  if (keydownup.size()>1){
-    auto keysup = Helper::split<std::vector<std::string>>(keydownup[1], "+");
-    for (auto &key : keysup) {
+  auto scan = [](std::string in, std::vector<G13::G13_State_Key> &out) {
+    auto keys = Helper::split<std::vector<std::string>>(in, "+");
+    for (auto &key : keys) {
       auto kval = G13_Manager::Instance()->FindInputKeyValue(key);
-      if (kval == BAD_KEY_VALUE) {
+      if (kval.key() == BAD_KEY_VALUE) {
         throw G13_CommandException("create action unknown key : " + key);
       }
-      _keysup.push_back(kval);
+      out.push_back(kval);
     }
-  }
+  };
 
-  std::vector<int> _keys_local;
-  std::vector<int> _keysup_local;
+  auto keydownup = Helper::split<std::vector<std::string>>(keys_string, " ");
+
+  scan(keydownup[0], _keys);
+  if (keydownup.size()>1)
+    scan(keydownup[1], _keysup);
 }
 
 G13_Action_Keys::~G13_Action_Keys() = default;
 
 void G13_Action_Keys::act(G13_Device &g13, bool is_down) {
+  auto downkeys = std::vector<bool>(G13_Manager::InputKeyMax(), false);
+
+  auto send_key = [&](LINUX_KEY_VALUE key, bool down) {
+    g13.SendEvent(EV_KEY, key, down);
+    downkeys[key] = down;
+    G13_LOG(log4cpp::Priority::DEBUG << "sending KEY " <<
+            (down? "DOWN ": "UP ") << key);
+  };
+  auto send_keys = [&](std::vector<G13_State_Key> &keys) {
+    for (auto &key : keys) {
+      if (key.is_down() && downkeys[key.key()])
+        send_key(key.key(), false);
+      send_key(key.key(), key.is_down());
+    }
+  };
+  auto release_keys = [&](std::vector<G13_State_Key> &keys) {
+    for (auto i = keys.size(); i--;)
+      if (downkeys[keys[i].key()])
+        send_key(keys[i].key(), false);
+  };
+
   if (is_down) {
-    for (int &_key : _keys) {
-      g13.SendEvent(EV_KEY, _key, is_down);
-      G13_LOG(log4cpp::Priority::DEBUG << "sending KEY DOWN " << _key);
-    }
-    if (!_keysup.empty()) for (int i = _keys.size() - 1; i >= 0; i--) {
-      g13.SendEvent(EV_KEY, _keys[i], !is_down);
-      G13_LOG(log4cpp::Priority::DEBUG << "sending KEY UP " << _keys[i]);
-    }
-  } else {
-    if(_keysup.empty()) for (int i = _keys.size() - 1; i >= 0; i--) {
-      g13.SendEvent(EV_KEY, _keys[i], is_down);
-      G13_LOG(log4cpp::Priority::DEBUG << "sending KEY UP " << _keys[i]);
-    } else {
-      for (int &_key : _keysup) {
-        g13.SendEvent(EV_KEY, _key, !is_down);
-        G13_LOG(log4cpp::Priority::DEBUG << "sending KEY DOWN " << _key);
-      }
-      for (int i = _keysup.size() - 1; i >= 0; i--) {
-        g13.SendEvent(EV_KEY, _keysup[i], is_down);
-        G13_LOG(log4cpp::Priority::DEBUG << "sending KEY UP " << _keysup[i]);
-      }
-    }
+    send_keys(_keys);
+    if (!_keysup.empty())
+      release_keys(_keys);
+  }
+  else if(_keysup.empty()) {
+    for (auto &key : _keys)
+      downkeys[key.key()] = key.is_down();
+    release_keys(_keys);
+  }
+  else {
+    send_keys(_keysup);
+    release_keys(_keysup);
   }
 }
 
@@ -75,7 +79,9 @@ void G13_Action_Keys::dump(std::ostream &out) const {
   for (size_t i = 0; i < _keys.size(); i++) {
     if (i)
       out << " + ";
-    out << G13_Manager::Instance()->FindInputKeyName(_keys[i]);
+    if (!_keys[i].is_down())
+      out << "-";
+    out << G13_Manager::Instance()->FindInputKeyName(_keys[i].key());
   }
 }
 

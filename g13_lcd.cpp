@@ -130,7 +130,7 @@ void G13_LCD::WritePos(int row, int col) {
   }
 }
 void G13_LCD::WriteChar(char c, unsigned int row, unsigned int col) {
-  if (row == -1) {
+  if (row == (unsigned int) -1) {
     row = cursor_row;
     col = cursor_col;
     cursor_col += m_keypad.current_font().width();

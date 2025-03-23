@@ -18,6 +18,8 @@ void printHelp() {
               << "specify name for input pipe" << std::endl;
     std::cout << std::left << std::setw(indent) << "  --pipe_out <name>"
               << "specify name for output pipe" << std::endl;
+    std::cout << std::left << std::setw(indent) << "  --umask <octal>"
+              << "specify umask for pipes creation" << std::endl;
     std::cout << std::left << std::setw(indent) << "  --log_level <level>"
               << "logging level" << std::endl;
 //    std::cout << std::left << std::setw(indent) << "--log_file <file>"
@@ -32,12 +34,13 @@ int main(int argc, char* argv[]) {
     G13_OUT("g13d v" << GIT_VERSION << " " << __DATE__ << " " << __TIME__);
 
     // TODO: move out argument parsing
-    const char* const short_opts = "l:c:i:o:d:h";
+    const char* const short_opts = "l:c:i:o:u:d:h";
     const option long_opts[] = {
         {"logo", required_argument, nullptr, 'l'},
         {"config", required_argument, nullptr, 'c'},
         {"pipe_in", required_argument, nullptr, 'i'},
         {"pipe_out", required_argument, nullptr, 'o'},
+        {"umask", required_argument, nullptr, 'u'},
         {"log_level", required_argument, nullptr, 'd'},
         //                                {"log_file", required_argument, nullptr, 'f'},
         {"help", no_argument, nullptr, 'h'},
@@ -65,6 +68,10 @@ int main(int argc, char* argv[]) {
 
             case 'o':
               G13_Manager::Instance()->setStringConfigValue("pipe_out", std::string(optarg));
+                break;
+
+            case 'u':
+              G13_Manager::Instance()->setStringConfigValue("umask", std::string(optarg));
                 break;
 
             case 'd':

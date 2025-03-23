@@ -12,7 +12,9 @@
 #include <libusb-1.0/libusb.h>
 #include <linux/uinput.h>
 #include <map>
+#include <vector>
 #include <memory>
+#include <regex>
 
 namespace G13 {
 // *************************************************************************
@@ -47,13 +49,18 @@ public:
 
   void SwitchToProfile(const std::string &name);
 
+  std::vector<std::string> FilteredProfileNames(const std::regex &pattern);
+
   ProfilePtr Profile(const std::string &name);
 
   void Dump(std::ostream &o, int detail = 0);
 
-  void Command(char const *str);
+  void Command(char const *str, const char *info = nullptr);
 
   void ReadCommandsFromPipe();
+
+  void ReadCommandsFromFile(const std::string &filename,
+                            const char *info = nullptr);
 
   void ReadConfigFile(const std::string &filename);
 
@@ -125,6 +132,7 @@ protected:
 
   int m_input_pipe_fid{};
   std::string m_input_pipe_name;
+  std::string m_input_pipe_fifo;
   int m_output_pipe_fid{};
   std::string m_output_pipe_name;
 
@@ -132,6 +140,7 @@ protected:
   FontPtr m_currentFont;
   std::map<std::string, ProfilePtr> m_profiles;
   ProfilePtr m_currentProfile;
+  std::vector<std::string> m_filesLoading;
 
   G13_LCD m_lcd;
   G13_Stick m_stick;

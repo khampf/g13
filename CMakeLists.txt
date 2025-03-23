@@ -4,6 +4,16 @@ project(g13)
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_FLAGS "-std=c++17")
 
+option(DEBUG "Compile for debugging" OFF)
+if(DEBUG)
+        add_compile_options(-g)
+        add_link_options(-g)
+endif()
+
+set(CONTROL_DIR "/tmp" CACHE STRING
+        "Absolute directory of default pipe files (/tmp)")
+add_compile_definitions(-DCONTROL_DIR="${CONTROL_DIR}")
+
 include_directories(.)
 
 add_executable(pbm2lpbm

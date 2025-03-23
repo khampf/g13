@@ -31,6 +31,7 @@
 #ifndef __HELPER_HPP__
 #define __HELPER_HPP__
 
+#include <string>
 #include <cstring>
 #include <iomanip>
 #include <map>
@@ -140,15 +141,16 @@ std::ostream &operator<<(std::ostream &o, const Bounds<T> &b) {
 
 typedef const char *CCP;
 
+inline const char *ltrim(const char *string, const char *ws = " \t") {
+  return string + strspn(string, ws);
+}
+
 inline const char *advance_ws(CCP &source, std::string &dest) {
-  const char *space = source ? strchr(source, ' ') : nullptr;
-  if (space) {
-    dest = std::string(source, space - source);
-    source = space + 1;
-  } else {
-    dest = source;
-    source = nullptr;
-  }
+  size_t l;
+  source = ltrim(source);
+  l = strcspn(source, "# \t");
+  dest = std::string(source, l);
+  source = !source[l] || source[l] == '#'? "": source + l + 1;
   return source;
 }
 
@@ -227,8 +229,19 @@ auto split(const typename Container::value_type &srcStr,
     next = srcStr.find_first_of(delimiters, current);
     result.push_back(srcStr.substr(current, next - current));
   } while (next != Container::value_type::npos);
-  return std::move(result);
+  return result;
 }
+
+// *************************************************************************
+// Ignore GCC Unused Result warning
+
+inline void IGUR(...) {
+}
+
+// *************************************************************************
+// Translate a glob pattern into a regular expression
+
+std::string glob2regex(const char *glob);
 
 // *************************************************************************
 
